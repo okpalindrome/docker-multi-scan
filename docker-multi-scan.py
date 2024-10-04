@@ -219,7 +219,7 @@ def execute_command(command, message, source_image):
             print(f"{source_image} already exists locally, skipping pull.")
             return True
         else:
-            print(f"{message} on image: {image}")
+            print(f"{message} on image: {source_image}")
 
         with open(images_failed_to_scan, 'a') as file:
             file.write(message + " - " + source_image + "\n")
