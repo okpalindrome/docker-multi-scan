@@ -237,11 +237,12 @@ def execute_scan(inputfile, outputfile):
 
         docker_pull_command = f"docker pull {image}"
 
-        grype_command = fr"grype {image} -o json > {outputfile}\json-files\grype_{json_file}" # Also kubescape tool 
+        grype_command = fr'grype {image} -o json > "{outputfile}\json-files\grype_{json_file}"'
+        # Also kubescape tool 
          
-        trivy_command = fr"trivy image {image} --format json > {outputfile}\json-files\trivy_{json_file}" 
+        trivy_command = fr'trivy image {image} --format json > "{outputfile}\json-files\trivy_{json_file}"' 
         
-        docker_scout_command = fr"docker-scout cves image://{image} --format sarif -o {outputfile}\json-files\docker_scout_{json_file}"
+        docker_scout_command = fr'docker-scout cves image://{image} --format sarif -o "{outputfile}\json-files\docker_scout_{json_file}"'
 
         docker_remove_command = f"docker rmi {image}"
         # delete_tar_command = f"del {tar_file_path}"
