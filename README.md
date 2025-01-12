@@ -1,23 +1,28 @@
 # Docker-multi-scan
 
-A script to automate docker image vulnerability scanning using open-source tools like grype, trivy and docker-scout. And later, filter the result to get the unique ones and store it inside `.xlsx` file.
+A script to automate docker image vulnerability scanning using open-source tools like `grype`, `trivy` and `docker-scout`. Filters the result to get the unique CVEs/git-vul-ids and store it `.xlsx` file format.
 
 #### Execution Process
 1. Get the image details from a input file
 2. Pull the image locally if it does not exist
 3. Scan using open-source tools and get json files for each
-4. Repeats the process untill all images from the input file is completed
-5. Parse the json output files from each tool
-6. Filter the unique result with details like CVE, Severity, Package, Installed Version, Fixed Versions and Source.
-7. Start deleting all the pulled images to save the system storage.
+4. Delete pulled image to save the system storage
+5. Repeats the process untill all images from the input file is completed
+6. Parse the json output files from each tool
+7. Filter the unique result with details like CVE, Severity, Package, Installed Version, Fixed Versions and Source. 
 8. Keeps track of failed scans or command errors during the process inside `Failed_cases.txt` file (only if failed).
 
 
 ## Pre-requisites
-- Windows envirnoment
 - Python3 and run `pip install xlsxwriter`
 - Start Docker (Desktop-GUI or deamon)
-- grype, trivy and docker-scout (logged-in) - should be accessible.
+- Login to the private registry where the images are hosted. Using `docker login <registry-url>`
+- `grype`, `trivy` and `docker-scout` (logged-in using above command) - should be accessible.
+- Update respective tools DBs -
+  - `grype db update`
+  - `trivy` auto db update on the first scan.
+  - `docker-scout` real time comparison with multiple sources.
+
 
 ## Run
 ```python docker-multi-scan.py --help
