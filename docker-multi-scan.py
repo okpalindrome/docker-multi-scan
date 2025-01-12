@@ -5,7 +5,6 @@ import os
 import argparse
 import sys
 import subprocess
-import shutil
 import threading
 import time
 
@@ -211,12 +210,14 @@ def read_image_list(file_path):
 
 def execute_command(command, message, source_image):
     try:
+        # command_parts = command.split()
+        # result = subprocess.run(command_parts, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         result = subprocess.run(command, shell=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         return True
     except subprocess.CalledProcessError as e:
         stderr_str = e.stderr.decode('utf-8') if e.stderr else ""
         if "Image is up to date" in stderr_str:
-            print(f"{source_image} already exists locally, skipping pull.")
+            print(f"{source_image} already exists.")
             return True
         else:
             print(f"{message} on image: {source_image}")
@@ -235,17 +236,25 @@ def execute_scan(inputfile, outputfile):
     for image in images:
         json_file = image.replace('/', '_').replace(':', '_') + '.json'
 
-        docker_pull_command = f"docker pull {image}"
+        docker_pull_command = ["docker", "pull", image]
+        # docker_pull_command = f"docker pull {image}"
 
-        grype_command = fr'grype {image} -o json > "{outputfile}\json-files\grype_{json_file}"'
-        # Also kubescape tool 
-         
-        trivy_command = fr'trivy image {image} --format json > "{outputfile}\json-files\trivy_{json_file}"' 
+        output_path = os.path.join(outputfile, "json-files", f"grype_{json_file}")
+        # Also kubescape tool
+        grype_command = ["grype", image, "-o", "json", "--file", output_path]
+        # grype_command = fr'grype {image} -o json > "{outputfile}\json-files\grype_{json_file}"'
         
-        docker_scout_command = fr'docker-scout cves image://{image} --format sarif -o "{outputfile}\json-files\docker_scout_{json_file}"'
+        output_path = os.path.join(outputfile, "json-files", f"trivy_{json_file}")
+        trivy_command = ["trivy", "image", image, "--format", "json", "-o", output_path]
+        # trivy_command = fr'trivy image {image} --format json > "{outputfile}\json-files\trivy_{json_file}"' 
+        
+        output_path = os.path.join(outputfile, "json-files", f"docker_scout_{json_file}")
+        docker_scout_command = ["docker-scout", "cves", f"image://{image}", "--format", "sarif", "-o", output_path]
+        # docker_scout_command = fr'docker-scout cves image://{image} --format sarif -o "{outputfile}\json-files\docker_scout_{json_file}"'
 
-        docker_remove_command = f"docker rmi {image}"
-        # delete_tar_command = f"del {tar_file_path}"
+        docker_remove_command = ["docker", "rmi", image]
+        # docker_remove_command = f"docker rmi {image}"
+        
 
         print(f"[INFO]  Pulling, scanning and filtering results - {image}")
 
@@ -317,7 +326,7 @@ def main():
 
     # Check if the input file and directory exists. Later, create directories - json-files and results
     args.file = os.path.normpath(args.file)
-    args.output = os.path.normpath(args.output)
+    args.output = os.path.normpath(args.output).rstrip(os.sep)
 
     if os.path.isfile(args.file) and os.path.isdir(args.output):
         json_dir = os.path.join(args.output, "json-files")
@@ -326,17 +335,20 @@ def main():
         
         try:
             if os.path.isdir(json_dir):
-                shutil.rmtree(json_dir)
+                print(f"Directory already exist - {json_dir}")
+                sys.exit(1)
 
             if os.path.isdir(result_dir):
-                shutil.rmtree(result_dir)
+                print(f"Directory already exist - {result_dir}")
+                sys.exit(1)
 
             # re-creating directories
             os.makedirs(json_dir)
             os.makedirs(result_dir)
 
             if os.path.isfile(images_failed_to_scan):
-                os.remove(images_failed_to_scan)
+                print(f"File already exist - {images_failed_to_scan}")
+                sys.exit(1)
 
             # re-create the file
             with open(images_failed_to_scan, 'w') as temp:
